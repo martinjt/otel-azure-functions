@@ -1,0 +1,55 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+
+processors:
+  batch:
+  attributes/collector_info:
+    actions:
+      - key: collector.hostname
+        value: $HOSTNAME
+        action: insert
+      - key: azure.container_app.revision
+        value: $CONTAINER_APP_REVISION
+        action: insert
+      - key: azure.container_app.name
+        value: $CONTAINER_APP_REVISION
+        action: insert
+  filter/healthcheck:
+    spans:
+      exclude:
+        match_type: strict
+        attributes:
+          - Key: http.target
+            Value: /health
+
+exporters:
+  otlp:
+    endpoint: "api.honeycomb.io:443"
+    headers:
+      "x-honeycomb-team": "$HONEYCOMB_API_KEY"
+  otlp/logs:
+    endpoint: "api.honeycomb.io:443"
+    headers:
+      "x-honeycomb-team": "$HONEYCOMB_API_KEY"
+      "x-honeycomb-dataset": "$HONEYCOMB_LOGS_DATASET"
+  logging:
+    loglevel: info
+    sampling_initial: 5
+    sampling_thereafter: 200
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch,attributes/collector_info,filter/healthcheck]
+      exporters: [otlp,logging]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/logs]
