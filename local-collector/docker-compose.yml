@@ -16,3 +16,4 @@ services:
       - "55679:55679" # zpages extension
     environment:
       - HONEYCOMB_API_KEY=${HONEYCOMB_API_KEY}
+      - APP_INSIGHTS_KEY=${APP_INSIGHTS_KEY}
