@@ -24,13 +24,15 @@ exporters:
     headers:
       "x-honeycomb-team": "$HONEYCOMB_API_KEY"
       "x-honeycomb-dataset": "$HONEYCOMB_LOGS_DATASET"
+  azuremonitor:
+    instrumentation_key: "$APP_INSIGHTS_KEY"
 
 service:
   pipelines:
     traces:
       receivers: [otlp]
       processors: [batch,filter/healthcheck]
-      exporters: [otlp]
+      exporters: [otlp,azuremonitor]
     metrics:
       receivers: [otlp]
       processors: [batch]
@@ -39,3 +41,6 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [otlp/logs]
+  telemetry:
+    logs:
+      level: "debug"
