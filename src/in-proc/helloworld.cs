@@ -6,12 +6,8 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using OpenTelemetry;
 using OpenTelemetry.Trace;
-using OpenTelemetry.Resources;
-using System;
 using System.Diagnostics;
-using System.Threading;
 
 namespace in_proc
 {
@@ -29,6 +25,7 @@ namespace in_proc
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
+            log.LogInformation($"current activity is {Activity.Current?.Source.Name} ");
             using var activity = Startup.source.StartActivity("Executing Function");
                 
             log.LogInformation("C# HTTP trigger function processed a request.");

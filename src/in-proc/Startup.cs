@@ -20,9 +20,10 @@ public class Startup : FunctionsStartup
             .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("in-proc-function"))
             .AddSource(source.Name)
             .AddOtlpExporter(otlpOptions => {
-                otlpOptions.Endpoint = new Uri($"http://{Environment.GetEnvironmentVariable("COLLECTOR_IP")}:4318/v1/traces");
+                otlpOptions.Endpoint = new Uri($"http://localhost:4318/v1/traces");
                 otlpOptions.Protocol = OpenTelemetry.Exporter.OtlpExportProtocol.HttpProtobuf;
             })
+            .AddAspNetCoreInstrumentation()
             .AddProcessor(new BatchActivityExportProcessor(new TestExporter(o.GetRequiredService<ILogger<TestExporter>>())))
             .SetSampler(new AlwaysOnSampler())
             .Build()

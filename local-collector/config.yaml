@@ -1,0 +1,41 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+      http:
+
+processors:
+  batch:
+  filter/healthcheck:
+    spans:
+      exclude:
+        match_type: strict
+        attributes:
+          - Key: http.target
+            Value: /health
+
+exporters:
+  otlp:
+    endpoint: "api.honeycomb.io:443"
+    headers:
+      "x-honeycomb-team": "$HONEYCOMB_API_KEY"
+  otlp/logs:
+    endpoint: "api.honeycomb.io:443"
+    headers:
+      "x-honeycomb-team": "$HONEYCOMB_API_KEY"
+      "x-honeycomb-dataset": "$HONEYCOMB_LOGS_DATASET"
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch,filter/healthcheck]
+      exporters: [otlp]
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp]
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp/logs]
