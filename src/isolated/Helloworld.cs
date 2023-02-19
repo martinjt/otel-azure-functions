@@ -15,7 +15,7 @@ namespace isolated
         }
 
         [Function("hello-world")]
-        public HttpResponseData HelloWorld([HttpTrigger(AuthorizationLevel.Function, "get", "post")] HttpRequestData req)
+        public HttpResponseData HelloWorld([HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "hello-world")] HttpRequestData req)
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
