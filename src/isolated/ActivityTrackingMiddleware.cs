@@ -4,6 +4,8 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Functions.Worker.Middleware;
 using Microsoft.Extensions.Configuration;
+using OpenTelemetry;
+using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Trace;
 
 public class ActivityTrackingMiddleware : IFunctionsWorkerMiddleware
@@ -23,8 +25,18 @@ public class ActivityTrackingMiddleware : IFunctionsWorkerMiddleware
             metadata.Type == "httpTrigger" &&
             await context.GetHttpRequestDataAsync() is { } requestData)
         {
+            var activityContext = Propagators.DefaultTextMapPropagator.Extract(new PropagationContext(
+                new ActivityContext(),
+                Baggage.Current
+            ), 
+                requestData.Headers, 
+                ExtractContextFromHeaderCollection);
+
             var route = GetRoute(context, requestData);
-            activity = Source.StartActivity($"{requestData.Method.ToUpper()} {context.FunctionDefinition.Name}");
+            activity = Source.StartActivity($"{requestData.Method.ToUpper()} {context.FunctionDefinition.Name}",
+                ActivityKind.Server,
+                activityContext.ActivityContext);
+                
             if (activity != null)
             {
                 activity.SetTag(TraceSemanticConventions.AttributeHttpRoute, route);
@@ -87,7 +99,22 @@ public class ActivityTrackingMiddleware : IFunctionsWorkerMiddleware
 
         return $"/{httpTriggerAttribute?.Route!}";
     }
+
+    /// <summary>
+    /// Extract values from the HttpRequestData Headers
+    /// </summary>
+    /// <param name="properties"></param>
+    /// <param name="key"></param>
+    /// <returns></returns>
+    internal static IEnumerable<string> ExtractContextFromHeaderCollection(HttpHeadersCollection headersCollection, string key)
+    {
+        return headersCollection.TryGetValues(key, out var propertyValue) ? 
+            propertyValue : 
+            Enumerable.Empty<string>();
+    }
 }
+
+
 
 internal static class FunctionActivityConstants
 {
