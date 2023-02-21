@@ -26,7 +26,7 @@ public class ActivityTrackingMiddleware : IFunctionsWorkerMiddleware
             await context.GetHttpRequestDataAsync() is { } requestData)
         {
             var activityContext = Propagators.DefaultTextMapPropagator.Extract(new PropagationContext(
-                new ActivityContext(),
+                Activity.Current?.Context ?? new ActivityContext(),
                 Baggage.Current
             ), 
                 requestData.Headers, 
@@ -36,7 +36,7 @@ public class ActivityTrackingMiddleware : IFunctionsWorkerMiddleware
             activity = Source.StartActivity($"{requestData.Method.ToUpper()} {context.FunctionDefinition.Name}",
                 ActivityKind.Server,
                 activityContext.ActivityContext);
-                
+
             if (activity != null)
             {
                 activity.SetTag(TraceSemanticConventions.AttributeHttpRoute, route);
